@@ -27,5 +27,5 @@ I'm always open to discussing spatial analytics, urban design, or exciting oppor
 
 - 💻 **Portfolio:** [ChristineCui12.github.io](https://ChristineCui12.github.io)
 - 📄 **Resume:** [Read my CV](https://ChristineCui12.github.io/assets/resume.pdf)
-- ✉️ **Email:** [Your Email Address Here]
-- 🔗 **LinkedIn:** [Your LinkedIn Link Here]
+- ✉️ **Email:** [christinexc325@gmail.com]
+- 🔗 **LinkedIn:** [https://www.linkedin.com/in/xinyuan-cui-229793386/]
