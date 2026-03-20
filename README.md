@@ -1,4 +1,4 @@
-# Hi there, I'm Xinyuan (Christine) Cui 🌿
+# Hi there, I'm Xinyuan (Christine) Cui
 
 > "Mapping the unseen narratives of cities through spatial data and interactive design."
 
