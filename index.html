@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xinyuan (Christine) Cui | Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 核心色彩与基础排版 */
+        :root {
+            --bg-color: #ECEBE6; 
+            --text-dark: #1E2B22; 
+            --accent-green: #5B7A61; 
+            --highlight: #C4CBAF; 
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            /* 胶片噪点质感 */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        /* 顶部导航 */
+        nav {
+            position: fixed; top: 0; width: 100%;
+            padding: 30px 5vw; display: flex;
+            justify-content: space-between; align-items: center;
+            box-sizing: border-box; z-index: 100;
+            mix-blend-mode: difference; color: #ECEBE6;
+        }
+        .nav-logo { font-family: var(--font-serif); font-size: 1.2rem; font-style: italic; }
+        .resume-link {
+            font-family: var(--font-sans); font-size: 0.85rem; text-transform: uppercase;
+            letter-spacing: 1px; color: #ECEBE6; text-decoration: none;
+            border-bottom: 1px solid rgba(236, 235, 230, 0.3); transition: all 0.3s ease;
+        }
+        .resume-link:hover { border-bottom-color: #ECEBE6; }
+
+        /* 全屏首屏 */
+        .hero {
+            height: 85vh; display: flex; flex-direction: column;
+            justify-content: center; padding-left: 5vw; position: relative;
+        }
+        .hero-bg-element {
+            position: absolute; top: -10%; right: -5%;
+            width: 60vw; height: 110vh; background-color: var(--accent-green);
+            opacity: 0.1; border-radius: 50%; filter: blur(80px); z-index: -1;
+        }
+        .hero h1 { font-family: var(--font-serif); font-size: clamp(3.5rem, 6vw, 6rem); line-height: 1.1; margin: 0; font-weight: 400; }
+        .hero h1 span { color: var(--accent-green); font-style: italic; }
+        .hero-subtitle { margin-top: 20px; max-width: 500px; font-size: 1rem; line-height: 1.8; font-weight: 300; color: #4A5D4E; }
+
+        /* =========================================
+           5. 画廊风：三分栏悬浮交互网格
+           ========================================= */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 一行三个 */
+            gap: 30px; /* 卡片之间的间距 */
+            padding: 0 5vw 15vh 5vw;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* 将整个卡片作为链接 */
+        .project-card {
+            position: relative;
+            height: 480px; /* 卡片统一高度 */
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end; /* 让文字默认沉在底部 */
+            text-decoration: none; /* 去除链接下划线 */
+            background-color: var(--text-dark);
+            /* 关键交互：静止时的阴影和过渡动画 */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.5s ease;
+        }
+
+        /* 鼠标悬浮：卡片整体放大变立体 */
+        .project-card:hover {
+            transform: scale(1.04) translateY(-10px);
+            box-shadow: 0 30px 50px rgba(30, 43, 34, 0.2);
+            z-index: 10;
+        }
+
+        /* 卡片背景图 */
+        .project-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover;
+            /* 静止时带有一点复古滤镜 */
+            filter: grayscale(40%) sepia(20%);
+            transition: transform 0.7s ease, filter 0.5s ease;
+            z-index: 1;
+        }
+
+        /* 鼠标悬浮：图片往内部放大，色彩恢复 */
+        .project-card:hover .project-bg {
+            transform: scale(1.1);
+            filter: grayscale(0%) sepia(0%);
+        }
+
+        /* 渐变遮罩：确保文字永远清晰 */
+        .project-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to top, rgba(30,43,34, 0.95) 0%, rgba(30,43,34, 0.2) 60%, transparent 100%);
+            z-index: 2;
+            transition: background 0.5s ease;
+        }
+
+        /* 鼠标悬浮：遮罩变更为森绿色，且覆盖全图 */
+        .project-card:hover .project-overlay {
+            background: rgba(91,122,97, 0.85); /* 半透明森绿底色 */
+        }
+
+        /* 卡片文本内容区 */
+        .project-content {
+            position: relative;
+            z-index: 3;
+            padding: 35px;
+            color: #ECEBE6;
+            width: 100%;
+            box-sizing: border-box;
+            transform: translateY(10px); /* 静止时稍微偏下 */
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* 鼠标悬浮：文字整体上浮 */
+        .project-card:hover .project-content {
+            transform: translateY(0);
+        }
+
+        .project-title {
+            font-family: var(--font-serif);
+            font-size: 1.6rem;
+            margin: 0 0 8px 0;
+            font-weight: 400;
+        }
+
+        .project-tags {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--highlight);
+            margin: 0;
+            transition: margin 0.5s ease;
+        }
+
+        /* 隐藏的详细信息：静止时高度为0且透明 */
+        .project-details {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 300;
+            line-height: 1.6;
+            color: rgba(236, 235, 230, 0.9);
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* 鼠标悬浮：展开隐藏信息 */
+        .project-card:hover .project-details {
+            max-height: 200px;
+            opacity: 1;
+            margin-top: 20px; /* 撑开与标题的间距 */
+        }
+
+        /* 响应式：屏幕变窄时自动变成两列或一列 */
+        @media (max-width: 1100px) {
+            .projects-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .projects-grid { grid-template-columns: 1fr; }
+            .hero { height: 70vh; }
+            .hero h1 { font-size: 3.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-logo">X.C.</div>
+        <a href="assets/resume.pdf" target="_blank" class="resume-link">Curriculum Vitae</a>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-bg-element"></div>
+        <h1>Xinyuan<br><span>(Christine)</span> Cui</h1>
+        <p class="hero-subtitle">
+            Master of Urban Spatial Analytics candidate at the University of Pennsylvania. Exploring the intersection of spatial data science, urban planning, and interactive web environments.
+        </p>
+    </section>
+
+    <section class="projects-grid">
+        
+        <a href="projects/otis_roadway_safety/analysis.html" class="project-card">
+            <img src="assets/project1_cover.jpg" alt="Roadway Safety" class="project-bg">
+            <div class="project-overlay"></div>
+            
+            <div class="project-content">
+                <h2 class="project-title">Off-Peak Roadway Safety</h2>
+                <p class="project-tags">R / Spatial Regression / OTIS</p>
+                
+                <div class="project-details">
+                    A spatial analysis project for the Philadelphia OTIS. By cleaning and applying spatial regression models to crash data, this project identifies high-risk urban corridors and built-environment factors during non-peak hours.
+                    <br><br><strong>Click to view Quarto Report →</strong>
+                </div>
+            </div>
+        </a>
+
+        <a href="projects/digital_divide_map/map.html" class="project-card">
+            <img src="assets/project2_cover.jpg" alt="Digital Divide Map" class="project-bg">
+            <div class="project-overlay"></div>
+            
+            <div class="project-content">
+                <h2 class="project-title">The Aging Digital Divide</h2>
+                <p class="project-tags">JavaScript / HTML+CSS / R</p>
+                
+                <div class="project-details">
+                    An interactive bivariate mapping application utilizing ACS data. It visualizes the intersection of median age and broadband access across Philadelphia, highlighting severe connectivity gaps in older neighborhoods.
+                    <br><br><strong>Click to launch Web App →</strong>
+                </div>
+            </div>
+        </a>
+
+        <a href="#" class="project-card">
+            <img src="assets/project3_cover.jpg" alt="Urban Heat Island" class="project-bg">
+            <div class="project-overlay"></div>
+            
+            <div class="project-content">
+                <h2 class="project-title">Urban Remote Sensing</h2>
+                <p class="project-tags">Python / GEE / Geospatial</p>
+                
+                <div class="project-details">
+                    Utilizing satellite imagery and machine learning to monitor urban surface temperatures and vegetative cover, providing actionable insights for sustainable city planning and climate resilience.
+                    <br><br><strong>Click to view Analysis →</strong>
+                </div>
+            </div>
+        </a>
+
+    </section>
+
+</body>
+</html>
