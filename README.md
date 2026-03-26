@@ -20,6 +20,14 @@ I am currently a Master of Urban Spatial Analytics (MUSA) candidate at the **Uni
 - 🚦 Analyzing **Off-Peak Roadway Safety** in collaboration with the Philadelphia Office of Transportation and Infrastructure Systems (OTIS), utilizing spatial regression to identify high-risk urban corridors.
 - 🌐 Exploring the **Aging Digital Divide** across Philadelphia neighborhoods through interactive bivariate mapping and ACS census data.
 
+### 📊 GitHub Stats
+<p align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=ChristineCui12&show_icons=true&theme=radical" alt="Christine's GitHub Stats" />
+</p>
+<p align="center">
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=ChristineCui12&layout=compact&theme=radical" alt="Top Languages" />
+</p>
+
 ---
 
 ### 📬 Let's Connect
