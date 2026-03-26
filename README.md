@@ -23,7 +23,7 @@ I am currently a Master of Urban Spatial Analytics (MUSA) candidate at the **Uni
 ---
 
 ### 📬 Let's Connect
-I'm always open to discussing spatial analytics, urban design, or exciting opportunities!
+I'm always open to discussing spatial analytics, job opportunities, or exciting opportunities!
 
 - 💻 **Portfolio:** [ChristineCui12.github.io](https://ChristineCui12.github.io)
 - 📄 **Resume:** [Read my CV](https://ChristineCui12.github.io/assets/resume.pdf)
