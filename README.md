@@ -1,4 +1,4 @@
-<img width="468" height="13" alt="image" src="https://github.com/user-attachments/assets/5896f476-f8e8-4b2d-99c9-93128dd3cab0" /># Hi there, I'm Xinyuan (Christine) Cui
+# Hi there, I'm Xinyuan (Christine) Cui
 
 > "Mapping the unseen narratives of cities through spatial data and interactive design."
 
@@ -22,12 +22,12 @@ I am currently a Master of Urban Spatial Analytics (MUSA) candidate at the **Uni
 - 🌐 Exploring the **Aging Digital Divide** across Philadelphia neighborhoods through interactive bivariate mapping and ACS census data.
 
 ### 📊 GitHub Stats
-<p align="center">
+<div align="center">
   <img src="https://github-readme-stats.vercel.app/api?username=ChristineCui12&show_icons=true&theme=radical" alt="Christine's GitHub Stats" />
-</p>
-<p align="center">
+  <br/>
+  <br/>
   <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=ChristineCui12&layout=compact&theme=radical" alt="Top Languages" />
-</p>
+</div>
 
 ---
 
