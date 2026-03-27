@@ -23,10 +23,10 @@ I am currently a Master of Urban Spatial Analytics (MUSA) candidate at the **Uni
 
 ### 📊 GitHub Stats
 <div align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=ChristineCui12&show_icons=true&theme=radical" alt="Christine's GitHub Stats" />
-  <br/>
-  <br/>
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=ChristineCui12&layout=compact&theme=radical" alt="Top Languages" />
+<img src="https://github-readme-stats.vercel.app/api?username=ChristineCui12&show_icons=true&theme=radical" alt="Christine's GitHub Stats" />
+<br/>
+<br/>
+<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=ChristineCui12&layout=compact&theme=radical" alt="Top Languages" />
 </div>
 
 ---
