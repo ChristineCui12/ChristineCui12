@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>共享单车接驳轨道交通研究 · 崔馨元</title>
+  <style>
+    :root {
+      --teal:    #0d5c5c;
+      --teal-m:  #117a7a;
+      --teal-l:  #12a0a0;
+      --teal-bg: #e8f4f4;
+      --orange:  #d9722a;
+      --orange-bg: #fef3ea;
+      --green:   #2a7a46;
+      --green-bg:#eaf4ee;
+      --text:    #1c1c1c;
+      --muted:   #5a5a5a;
+      --border:  #d4e6e6;
+      --bg:      #f2f7f7;
+      --white:   #ffffff;
+      --r: 12px;
+      --sh: 0 2px 16px rgba(0,0,0,.07);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: "PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+           background: var(--bg); color: var(--text); line-height: 1.75; font-size: 15px; }
+
+    /* NAV */
+    nav { position: sticky; top: 0; z-index: 200; background: #0a3f3f;
+          display: flex; align-items: center; padding: 0 28px; overflow-x: auto; white-space: nowrap; }
+    nav .logo { color: #fff; font-weight: 800; font-size: 14px; margin-right: 24px; flex-shrink: 0;
+                display: flex; align-items: center; gap: 8px; }
+    nav a { color: rgba(255,255,255,.65); text-decoration: none; font-size: 13px;
+            padding: 15px 12px; border-bottom: 2px solid transparent; transition: all .15s; flex-shrink: 0; }
+    nav a:hover { color: #fff; border-bottom-color: var(--orange); }
+
+    /* HERO */
+    .hero { position: relative; height: 520px; overflow: hidden; }
+    .hero-bg { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; filter: brightness(.55); }
+    .hero-body { position: absolute; inset: 0; display: flex; flex-direction: column;
+                 justify-content: flex-end; padding: 56px 64px; }
+    .hero-kicker { display: inline-flex; align-items: center; gap: 8px;
+                   background: var(--orange); color: #fff; border-radius: 4px;
+                   font-size: 11px; font-weight: 700; letter-spacing: 2px;
+                   padding: 4px 12px; margin-bottom: 14px; width: fit-content; }
+    .hero h1 { font-size: clamp(1.5rem,3.5vw,2.4rem); font-weight: 900;
+               color: #fff; line-height: 1.4; margin-bottom: 6px; max-width: 680px; }
+    .hero-en { font-size: .82rem; color: rgba(255,255,255,.6); font-style: italic;
+               margin-bottom: 22px; max-width: 640px; }
+    .hero-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .hero-chip { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+                 color: rgba(255,255,255,.9); font-size: 12.5px; border-radius: 6px; padding: 5px 14px; }
+
+    /* LAYOUT */
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+    /* SECTION HEADINGS */
+    .sec-head { padding: 64px 0 0; margin-bottom: 32px; }
+    .sec-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase;
+                   color: var(--teal-l); margin-bottom: 8px; }
+    .sec-head h2 { font-size: 1.7rem; font-weight: 800; color: var(--teal); line-height: 1.3; }
+    .sec-head p { font-size: .9rem; color: var(--muted); margin-top: 8px; max-width: 640px; }
+    .sec-rule { width: 40px; height: 4px; background: var(--orange); border-radius: 2px; margin-top: 14px; }
+
+    /* SUB HEADING */
+    .sub-h { font-size: .75rem; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase;
+             color: var(--teal-m); display: flex; align-items: center; gap: 10px;
+             margin: 32px 0 16px; }
+    .sub-h::before { content:""; width:4px; height:14px; background:var(--orange); border-radius:2px; }
+    .sub-h::after  { content:""; flex:1; height:1px; background:var(--border); }
+
+    /* CARDS */
+    .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r);
+            box-shadow: var(--sh); overflow: hidden; }
+    .card-pad { padding: 22px 24px; }
+    .card h3 { font-size: .95rem; font-weight: 700; color: var(--teal); margin-bottom: 8px; }
+    .card p  { font-size: .87rem; color: var(--muted); }
+
+    /* GRIDS */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+    .g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+    @media(max-width:760px) { .g2,.g3,.g4 { grid-template-columns: 1fr; } }
+
+    /* FIGURE */
+    figure { margin: 0; }
+    figure img { width: 100%; display: block; border-radius: var(--r);
+                 border: 1px solid var(--border); box-shadow: var(--sh); }
+    figcaption { font-size: .76rem; color: var(--muted); text-align: center;
+                 margin-top: 8px; font-style: italic; line-height: 1.5; }
+
+    /* PHOTO BANNER */
+    .photo-banner { position: relative; height: 280px; overflow: hidden; border-radius: var(--r); }
+    .photo-banner img { width:100%; height:100%; object-fit:cover; object-position:center;
+                        filter:brightness(.5); display:block; }
+    .photo-banner-body { position:absolute; inset:0; display:flex; flex-direction:column;
+                         justify-content:flex-end; padding:24px 28px; }
+    .photo-banner-tag { background:var(--orange); color:#fff; font-size:11px; font-weight:700;
+                        letter-spacing:1.5px; padding:3px 10px; border-radius:4px; width:fit-content; margin-bottom:8px; }
+    .photo-banner h3 { font-size:1.15rem; font-weight:800; color:#fff; line-height:1.4; margin-bottom:4px; }
+    .photo-banner p  { font-size:.8rem; color:rgba(255,255,255,.75); line-height:1.5; }
+
+    /* STAT */
+    .stats { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+    .stat { background:var(--teal-bg); border-radius:var(--r); padding:16px 20px; flex:1; min-width:120px; }
+    .stat-v { font-size:1.6rem; font-weight:900; color:var(--teal); line-height:1; }
+    .stat-l { font-size:.75rem; color:var(--muted); margin-top:4px; }
+
+    /* CALLOUT */
+    .callout { border-left: 4px solid var(--orange); background: var(--orange-bg);
+               border-radius: 0 var(--r) var(--r) 0; padding: 14px 18px;
+               font-size: .88rem; color: #6b3010; margin: 18px 0; line-height: 1.65; }
+    .callout.green { border-left-color: var(--green); background: var(--green-bg); color: #1a4a2a; }
+    .callout strong { color: inherit; }
+
+    /* BADGE */
+    .badge { display:inline-block; background:var(--teal-bg); color:var(--teal);
+             font-size:.73rem; font-weight:700; border-radius:5px; padding:3px 9px; margin:2px; }
+    .badge.o { background:var(--orange-bg); color:#8a3808; }
+
+    /* MAP GRID: side-by-side maps with label */
+    .map-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .map-grid.g4c { grid-template-columns:1fr 1fr 1fr 1fr; }
+    @media(max-width:700px) { .map-grid,.map-grid.g4c { grid-template-columns:1fr 1fr; } }
+    .map-item { display:flex; flex-direction:column; gap:6px; }
+    .map-label { font-size:.78rem; font-weight:700; color:var(--teal); text-align:center;
+                 background:var(--teal-bg); border-radius:5px; padding:4px 0; }
+    .map-item img { width:100%; border-radius:8px; border:1px solid var(--border); display:block; }
+
+    /* TYPE STATION CARDS */
+    .type-strip { display:flex; flex-wrap:wrap; gap:12px; margin:12px 0; }
+    .type-card { flex:1; min-width:140px; border-radius:var(--r); padding:18px 16px;
+                 border: 1.5px solid; }
+    .type-card.r { background:#edf6f0; border-color:#7dbc92; }
+    .type-card.c { background:#fff5eb; border-color:#f0b06a; }
+    .type-card.m { background:#eef1fb; border-color:#8da8d4; }
+    .type-card .n { font-size:2.2rem; font-weight:900; line-height:1; }
+    .type-card.r .n { color:#256b3a; } .type-card.c .n { color:#9b4e08; } .type-card.m .n { color:#2b48a0; }
+    .type-card .lbl { font-size:.85rem; font-weight:700; margin-top:4px; color:var(--text); }
+    .type-card .rule { font-size:.75rem; color:var(--muted); margin-top:6px; font-style:italic; }
+
+    /* FORMULA */
+    .formula { background:var(--teal-bg); border:1.5px dashed var(--teal-l); border-radius:var(--r);
+               padding:20px 24px; text-align:center; margin:18px 0; }
+    .formula-main { font-size:1rem; font-weight:800; color:var(--teal); }
+    .formula-sub  { font-size:.8rem; color:var(--muted); margin-top:6px; }
+
+    /* OLS FINDING PILLS */
+    .finding-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:14px; }
+    @media(max-width:700px) { .finding-row { grid-template-columns:1fr; } }
+    .finding { border-radius:var(--r); padding:16px 18px; border:1px solid var(--border); background:var(--white); }
+    .finding.pos { border-top: 4px solid var(--teal-l); }
+    .finding.neg { border-top: 4px solid #c0392b; }
+    .finding .dir { font-size:.72rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
+    .finding.pos .dir { color:var(--teal-l); } .finding.neg .dir { color:#c0392b; }
+    .finding h4 { font-size:.92rem; font-weight:700; color:var(--text); margin-bottom:6px; }
+    .finding p  { font-size:.82rem; color:var(--muted); }
+
+    /* CONCLUSION */
+    .concl { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+    @media(max-width:600px) { .concl { grid-template-columns:1fr; } }
+    .concl-item { background:var(--white); border:1px solid var(--border); border-radius:var(--r);
+                  padding:14px 16px; display:flex; gap:10px; font-size:.87rem; color:var(--muted); }
+    .concl-n { width:22px; height:22px; border-radius:50%; background:var(--teal); color:#fff;
+               font-size:.7rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+
+    /* SECTION SPACER */
+    .spacer { height: 64px; }
+
+    /* FOOTER */
+    footer { background:#0a3f3f; color:rgba(255,255,255,.6); text-align:center;
+             padding:32px 24px; font-size:.8rem; margin-top:64px; }
+    footer strong { color:#fff; }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="logo">🚲 共享单车接驳研究</div>
+  <a href="#bg">研究背景</a>
+  <a href="#data">数据与方法</a>
+  <a href="#temporal">时空特征</a>
+  <a href="#range">服务范围</a>
+  <a href="#classify">站点分类</a>
+  <a href="#factor">影响因素</a>
+  <a href="#guide">优化导则</a>
+  <a href="#concl">结论</a>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <img class="hero-bg" src="assets/bike-sharing/p04_img01.jpeg" alt="" />
+  <div class="hero-body">
+    <span class="hero-kicker">设计课题研究 · 终期汇报</span>
+    <h1>共享单车接驳轨道交通的<br>时空特征与影响因素研究</h1>
+    <p class="hero-en">A Study on the Spatiotemporal Characteristics and Influencing Factors of Bike-Sharing Integration with Rail Transit — A Case Study of Tianjin</p>
+    <div class="hero-chips">
+      <span class="hero-chip">苏琪 · 郭函祎 · 郭雅洁 · 崔馨元</span>
+      <span class="hero-chip">指导教师：任利剑</span>
+      <span class="hero-chip">天津大学建筑学院</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ══ 01 研究背景 ══ -->
+  <div id="bg">
+    <div class="sec-head">
+      <p class="sec-eyebrow">01 · Research Background</p>
+      <h2>研究背景</h2>
+      <p>共享单车与城市轨道交通融合成为城市绿色出行的关键议题，然而二者的协同发展面临诸多挑战。</p>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="g3">
+      <div class="photo-banner">
+        <img src="assets/bike-sharing/p04_img01.jpeg" alt="背景1" />
+        <div class="photo-banner-body">
+          <span class="photo-banner-tag">背景 01</span>
+          <h3>国家倡导绿色出行方式</h3>
+          <p>《绿色出行创建行动方案》明确引导公众优先选择公共交通、步行和自行车等绿色出行方式</p>
+        </div>
+      </div>
+      <div class="photo-banner">
+        <img src="assets/bike-sharing/p05_img01.jpeg" alt="背景2" />
+        <div class="photo-banner-body">
+          <span class="photo-banner-tag">背景 02</span>
+          <h3>共享单车改变换乘格局</h3>
+          <p>填补地铁与目的地之间"走路不近、打车费钱"的尴尬距离，扩大地铁核心服务半径</p>
+        </div>
+      </div>
+      <div class="photo-banner">
+        <img src="assets/bike-sharing/p07_img01.jpeg" alt="背景3" />
+        <div class="photo-banner-body">
+          <span class="photo-banner-tag">背景 03</span>
+          <h3>接驳轨道交通面临挑战</h3>
+          <p>停车空间不足、潮汐现象、无序停放、企业恶性竞争、监管滞后等问题亟待解决</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:20px;">
+      地铁站周边是共享单车最主要的活跃区域，占全市出行总量约 <strong>40%</strong>。天津市轨道周边骑行订单占比 <strong>31.1%</strong>，2021 年累计骑行 <strong>2.56 亿人次</strong>，总里程 <strong>3.83 亿 km</strong>。针对天津的专项研究仍较为缺乏。
+    </div>
+
+    <div class="g2" style="margin-top:18px;">
+      <div class="card card-pad">
+        <h3>研究目的</h3>
+        <p>① 揭示共享单车接驳轨道交通的时空规律（接驳行为特征 + 接驳范围特征）</p>
+        <p style="margin-top:8px;">② 探究不同类型站点的差异，分类识别共享单车接驳影响因素</p>
+        <p style="margin-top:8px;">③ 分类提出优化导则，为政府制定政策、企业制定运营策略提供依据</p>
+      </div>
+      <div class="card card-pad">
+        <h3>三大创新点</h3>
+        <p>🔍 <strong>精细化服务范围：</strong>HDBSCAN + 核密度 + 等值线替代传统简单缓冲区，精准识别各站实际接驳服务范围</p>
+        <p style="margin-top:8px;">📊 <strong>综合接驳能力指标：</strong>引入 TOPSIS 法综合量化接驳量、分担率、服务范围</p>
+        <p style="margin-top:8px;">🗂️ <strong>分类站点探讨：</strong>居住 · 商业 · 混合三类站点差异化特征分析与优化策略</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 02 研究区域与数据 ══ -->
+  <div id="data">
+    <div class="sec-head">
+      <p class="sec-eyebrow">02 · Study Area & Data</p>
+      <h2>研究区域与数据</h2>
+      <p>天津市内六区 + 环城四区部分区域，取三家运营商覆盖范围交集，以 2022 年 11 月工作日及周末骑行 OD 数据为核心数据源。</p>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="g2" style="align-items:start;">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <figure>
+          <img src="assets/bike-sharing/p17_img05.jpeg" alt="研究区域" />
+          <figcaption>图1 研究范围——天津市内六区（南开、和平、河东、河西、河北、红桥）+ 环城四区部分区域</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/bike-sharing/p19_img08.jpeg" alt="轨道交通网络" />
+          <figcaption>图2 天津市地铁网络——研究范围内共 113 个站点、364 个出站口</figcaption>
+        </figure>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="stats">
+          <div class="stat"><div class="stat-v">113</div><div class="stat-l">地铁站点</div></div>
+          <div class="stat"><div class="stat-v">364</div><div class="stat-l">出站口</div></div>
+          <div class="stat"><div class="stat-v">138.8<span style="font-size:1rem">万</span></div><div class="stat-l">工作日骑行数据</div></div>
+          <div class="stat"><div class="stat-v">106.1<span style="font-size:1rem">万</span></div><div class="stat-l">周末骑行数据</div></div>
+        </div>
+        <div class="card card-pad">
+          <h3>数据类型</h3>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+            <span class="badge">共享单车骑行 OD 数据</span>
+            <span class="badge">手机信令数据（职住）</span>
+            <span class="badge">地铁站点 POI</span>
+            <span class="badge">土地利用数据</span>
+            <span class="badge">OSM 路网</span>
+            <span class="badge">建筑轮廓 & 层数</span>
+            <span class="badge">地铁刷卡进出站数据</span>
+            <span class="badge o">美团 · 青桔 · 哈罗运营范围</span>
+          </div>
+        </div>
+        <div class="card card-pad">
+          <h3>缓冲区划定</h3>
+          <p>对比多种文献方法后，以地铁出站口 <strong>100m 缓冲区</strong>作为有效接驳判定范围，生成 364 个缓冲面后合并，覆盖 113 个地铁站点。</p>
+        </div>
+        <figure>
+          <img src="assets/bike-sharing/p20_img18.jpeg" alt="研究范围地图" />
+          <figcaption>图3 研究范围与 100m 缓冲区叠合示意</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 03 接驳时空特征 ══ -->
+  <div id="temporal">
+    <div class="sec-head">
+      <p class="sec-eyebrow">03 · Spatiotemporal Characteristics</p>
+      <h2>接驳时空特征分析</h2>
+      <p>从接驳频率、骑行时长、骑行距离三个维度分析工作日与周末的接驳行为差异，并可视化空间分布规律。</p>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="sub-h">接驳量空间分布——工作日 vs 周末（起点 & 终点）</div>
+    <div class="map-grid g4c">
+      <div class="map-item">
+        <div class="map-label">工作日 · 起点（17o）</div>
+        <img src="assets/bike-sharing/p21_img08.jpeg" alt="工作日起点接驳量" />
+      </div>
+      <div class="map-item">
+        <div class="map-label">工作日 · 终点（17d）</div>
+        <img src="assets/bike-sharing/p21_img09.jpeg" alt="工作日终点接驳量" />
+      </div>
+      <div class="map-item">
+        <div class="map-label">周末 · 起点（19o）</div>
+        <img src="assets/bike-sharing/p21_img10.jpeg" alt="周末起点接驳量" />
+      </div>
+      <div class="map-item">
+        <div class="map-label">周末 · 终点（19d）</div>
+        <img src="assets/bike-sharing/p21_img11.jpeg" alt="周末终点接驳量" />
+      </div>
+    </div>
+    <p style="font-size:.78rem; color:var(--muted); text-align:center; margin-top:8px; font-style:italic;">图4 天津市各地铁站共享单车接驳量空间分布——气泡大小代表接驳量，颜色深浅表示数量级别</p>
+
+    <div class="callout" style="margin-top:20px;">
+      <strong>工作日：</strong>接驳量更高，热点呈明显放射状（以和平区为核心）；<strong>周末：</strong>接驳量下降，核心范围由和平区扩展至南开、红桥三区，休闲出行特征明显。接驳频率集中在 <strong>250–1000 次/日</strong>，最高单站（营口道）工作日达 <strong>2222 条</strong>。
+    </div>
+
+    <div class="sub-h" style="margin-top:32px;">骑行时长与距离特征</div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-pad" style="padding-bottom:12px;">
+          <h3>骑行时长</h3>
+          <p>工作日与周末骑行时间均集中在 <strong>5–10 分钟</strong>，分布较为均匀。运营范围外围部分站点平均时长偏短（&lt;5 min），个别边缘站点异常偏长。</p>
+        </div>
+        <div style="display:flex; gap:0; border-top:1px solid var(--border);">
+          <div style="flex:1; padding:14px 16px; text-align:center; border-right:1px solid var(--border);">
+            <div style="font-size:1.5rem; font-weight:900; color:var(--teal);">810 秒</div>
+            <div style="font-size:.75rem; color:var(--muted); margin-top:3px;">工作日平均时长</div>
+          </div>
+          <div style="flex:1; padding:14px 16px; text-align:center;">
+            <div style="font-size:1.5rem; font-weight:900; color:var(--teal);">835 秒</div>
+            <div style="font-size:.75rem; color:var(--muted); margin-top:3px;">周末平均时长</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-pad" style="padding-bottom:12px;">
+          <h3>骑行距离</h3>
+          <p>工作日与周末骑行距离均集中在 <strong>2 km 以内</strong>，分布均匀。外围站点平均骑行距离偏小（&lt;1 km），工作日骑行距离略大于周末。</p>
+        </div>
+        <div style="display:flex; gap:0; border-top:1px solid var(--border);">
+          <div style="flex:1; padding:14px 16px; text-align:center; border-right:1px solid var(--border);">
+            <div style="font-size:1.5rem; font-weight:900; color:var(--teal);">1563 m</div>
+            <div style="font-size:.75rem; color:var(--muted); margin-top:3px;">工作日平均距离</div>
+          </div>
+          <div style="flex:1; padding:14px 16px; text-align:center;">
+            <div style="font-size:1.5rem; font-weight:900; color:var(--teal);">1527 m</div>
+            <div style="font-size:.75rem; color:var(--muted); margin-top:3px;">周末平均距离</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 04 接驳服务范围 ══ -->
+  <div id="range">
+    <div class="sec-head">
+      <p class="sec-eyebrow">04 · Service Area Analysis</p>
+      <h2>接驳服务范围分析</h2>
+      <p>突破传统缓冲区局限，综合运用 HDBSCAN 聚类、核密度分析、等值线划定等方法，精细化识别各站点实际接驳服务范围。</p>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="g2" style="align-items:start;">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <figure>
+          <img src="assets/bike-sharing/p24_img04.jpeg" alt="泰森多边形理论服务范围" />
+          <figcaption>图5 泰森多边形划定的理论接驳服务范围——113 个站点全覆盖</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/bike-sharing/p25_img12.jpeg" alt="HDBSCAN聚类" />
+          <figcaption>图6 HDBSCAN 聚类结果——红色为正常值，蓝紫色为离散点（轮廓系数 0.64–0.66）</figcaption>
+        </figure>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <figure>
+          <img src="assets/bike-sharing/p25_img23.jpeg" alt="核密度与等值线" />
+          <figcaption>图7 核密度分析 + 等值线划定（d=30）+ 10%/90% 分位数确定实际接驳服务范围边界</figcaption>
+        </figure>
+        <div class="card card-pad">
+          <h3>分析技术流程</h3>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+            <div style="display:flex; gap:10px; align-items:center;">
+              <div style="width:28px; height:28px; border-radius:50%; background:var(--teal); color:#fff; font-size:.75rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</div>
+              <span style="font-size:.87rem; color:var(--muted);">按站点分组，计算骑行 OD 点之间欧式距离</span>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <div style="width:28px; height:28px; border-radius:50%; background:var(--teal); color:#fff; font-size:.75rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;">2</div>
+              <span style="font-size:.87rem; color:var(--muted);">HDBSCAN 聚类（min_cluster_size=10）识别离散点并清洗</span>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <div style="width:28px; height:28px; border-radius:50%; background:var(--teal); color:#fff; font-size:.75rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3</div>
+              <span style="font-size:.87rem; color:var(--muted);">核密度分析 → 等值线划定（d=30）</span>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <div style="width:28px; height:28px; border-radius:50%; background:var(--teal); color:#fff; font-size:.75rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;">4</div>
+              <span style="font-size:.87rem; color:var(--muted);">10%/90% 分位数提取确定服务范围边界</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-h" style="margin-top:32px;">服务范围形态分类——四种类型</div>
+    <div class="g2" style="align-items:start;">
+      <figure>
+        <img src="assets/bike-sharing/p26_img15.jpeg" alt="服务范围类型示意" />
+        <figcaption>图8 接驳服务范围四种形态——放射扩展型（营口道一带核心站）· 偏心扩展型 · 带状扩展型 · 多核心型</figcaption>
+      </figure>
+      <div class="g2" style="gap:12px;">
+        <div class="card card-pad" style="border-top:4px solid var(--teal-l);">
+          <h3>放射扩展型</h3>
+          <p>以站点为中心，各方向扩散均匀；常见于接驳量最高的核心站点</p>
+        </div>
+        <div class="card card-pad" style="border-top:4px solid var(--orange);">
+          <h3>偏心扩展型</h3>
+          <p>接驳多集中在某一特定方向，受周边大型吸引点影响明显</p>
+        </div>
+        <div class="card card-pad" style="border-top:4px solid #7b68ee;">
+          <h3>带状扩展型</h3>
+          <p>沿特定轴线（道路 / 地铁线路）向两端延伸</p>
+        </div>
+        <div class="card card-pad" style="border-top:4px solid #c0392b;">
+          <h3>多核心型</h3>
+          <p>存在多个骑行高密度区域，多见于混合类站点，接驳形态分散</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 05 站点分类 ══ -->
+  <div id="classify">
+    <div class="sec-head">
+      <p class="sec-eyebrow">05 · Station Classification</p>
+      <h2>地铁站点分类与接驳特征比较</h2>
+      <p>依据站点缓冲区内土地利用情况，将 113 个地铁站划分为三类，并计算各站综合接驳能力。</p>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="g2" style="align-items:start;">
+      <div>
+        <div class="type-strip">
+          <div class="type-card r">
+            <div class="n">45</div>
+            <div class="lbl">居住类站点</div>
+            <div class="rule">居住用地占比 ≥ 40%</div>
+          </div>
+          <div class="type-card c">
+            <div class="n">21</div>
+            <div class="lbl">商业类站点</div>
+            <div class="rule">商业商务用地占比 ≥ 15%</div>
+          </div>
+          <div class="type-card m">
+            <div class="n">47</div>
+            <div class="lbl">混合类站点</div>
+            <div class="rule">其余站点</div>
+          </div>
+        </div>
+        <div class="callout green" style="margin-top:14px;">
+          <strong>居住类站点接驳需求最高，</strong>且其周末接驳量与平均骑行时间均大于工作日；商业 / 混合类站点均为工作日 &gt; 周末。
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <table style="width:100%; border-collapse:collapse; font-size:.83rem;">
+            <thead>
+              <tr style="background:var(--teal-bg);">
+                <th style="padding:10px 14px; text-align:left; color:var(--teal); font-weight:700; border-bottom:2px solid var(--teal-l);">指标</th>
+                <th style="padding:10px 14px; text-align:center; color:#256b3a; border-bottom:2px solid var(--teal-l);">居住类</th>
+                <th style="padding:10px 14px; text-align:center; color:#9b4e08; border-bottom:2px solid var(--teal-l);">商业类</th>
+                <th style="padding:10px 14px; text-align:center; color:#2b48a0; border-bottom:2px solid var(--teal-l);">混合类</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding:9px 14px; border-bottom:1px solid var(--border); color:var(--muted);">周末接驳比（d）</td><td style="padding:9px 14px; text-align:center; border-bottom:1px solid var(--border); font-weight:700; color:#256b3a;">44.2%</td><td style="padding:9px 14px; text-align:center; border-bottom:1px solid var(--border);">17.8%</td><td style="padding:9px 14px; text-align:center; border-bottom:1px solid var(--border);">35.5%</td></tr>
+              <tr><td style="padding:9px 14px; border-bottom:1px solid var(--border); color:var(--muted);">工作日接驳比（o）</td><td style="padding:9px 14px; text-align:center; border-bottom:1px solid var(--border); font-weight:700; color:#256b3a;">39.8%</td><td style="padding:9px 14px; text-align:center; border-bottom:1px solid var(--border);">33.8%</td><td style="padding:9px 14px; text-align:center; border-bottom:1px solid var(--border);">26.5%</td></tr>
+              <tr><td style="padding:9px 14px; border-bottom:1px solid var(--border); color:var(--muted);">主导形态类型</td><td style="padding:9px 14px; text-align:center; border-bottom:1px solid var(--border);">放射 / 偏心</td><td style="padding:9px 14px; text-align:center; border-bottom:1px solid var(--border);">偏心扩展</td><td style="padding:9px 14px; text-align:center; border-bottom:1px solid var(--border);">多核心</td></tr>
+              <tr><td style="padding:9px 14px; color:var(--muted);">密度核心集中</td><td style="padding:9px 14px; text-align:center;">居住区 · 学校</td><td style="padding:9px 14px; text-align:center;">商务办公楼</td><td style="padding:9px 14px; text-align:center;">多类型混杂</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <figure>
+        <img src="assets/bike-sharing/crop_station_map.png" alt="站点分类地图" />
+        <figcaption>图9 天津市地铁站分类分布图（粉色 = 商业类 · 黄色 = 居住类，混合类未标色）</figcaption>
+      </figure>
+    </div>
+
+    <div class="sub-h" style="margin-top:32px;">综合接驳能力计算（TOPSIS 法）</div>
+    <div class="formula">
+      <div class="formula-main">综合接驳能力 = <span style="color:var(--orange);">28.89%</span> × 接驳范围面积 ＋ <span style="color:var(--orange);">40.96%</span> × 接驳量 ＋ <span style="color:var(--orange);">30.15%</span> × 交通分担率</div>
+      <div class="formula-sub">交通分担率 = 接驳量 / 地铁进站刷卡量 &nbsp;|&nbsp; 接驳量权重最高（40.96%）</div>
+    </div>
+  </div>
+
+  <!-- ══ 06 影响因素 ══ -->
+  <div id="factor">
+    <div class="sec-head">
+      <p class="sec-eyebrow">06 · Influencing Factors</p>
+      <h2>共享单车接驳影响因素分析</h2>
+      <p>基于"5D"建成环境框架构建 19 个指标，通过 OLS 回归进行定量分析，并结合站点案例深入定性解读。</p>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="sub-h">定量探究——OLS 回归分析</div>
+    <div class="g2" style="align-items:start;">
+      <figure>
+        <img src="assets/bike-sharing/crop_ols_table.png" alt="OLS回归结果" />
+        <figcaption>图10 OLS 回归分析结果（模型总体 p=0.043，具备显著性）</figcaption>
+      </figure>
+      <div>
+        <div class="finding-row" style="grid-template-columns:1fr;">
+          <div class="finding pos">
+            <div class="dir">正向显著 ↑</div>
+            <h4>居住人口密度（β = 0.437）</h4>
+            <p>影响强度最大。人口密集区公交接驳需求增加，共享单车设施投放相对集中，形成良性循环。</p>
+          </div>
+          <div class="finding pos" style="margin-top:10px;">
+            <div class="dir">正向显著 ↑</div>
+            <h4>交通用地比例（β = 0.360）</h4>
+            <p>交通用地比例增加，路网密度相对较高，有利于营造良好的慢行骑行环境，构建一体化接驳网络。</p>
+          </div>
+          <div class="finding neg" style="margin-top:10px;">
+            <div class="dir">负向显著 ↓</div>
+            <h4>土地利用混合熵（β = −0.361）</h4>
+            <p>功能过度混合导致区域内交通流向分散、共享单车分布不均、路网过度复杂化，影响接驳整体效率。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-h" style="margin-top:32px;">定性解读——居住类站点（以西南楼、海光寺为例）</div>
+    <div class="g2" style="align-items:start;">
+      <figure>
+        <img src="assets/bike-sharing/crop_res_case.png" alt="居住类站点案例" />
+        <figcaption>图11 居住类站点接驳形态解读：西南楼（接驳条件良好）vs 海光寺（多吸引点导致分担率偏低）</figcaption>
+      </figure>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="callout green">
+          居住类站点中，接驳起讫点较为均匀，整体<strong>沿道路发散至居住区</strong>。学校入口、医院、公园等功能对骑行路径产生局部吸引或排斥作用，但不改变整体形态。
+        </div>
+        <div class="card card-pad">
+          <h3>西南楼站——接驳条件良好</h3>
+          <p>人口密度和分担率均较高；整体几乎全覆盖泰森多边形范围；天津大剧院、五大道、公园等形成吸引延伸。</p>
+        </div>
+        <div class="card card-pad">
+          <h3>海光寺站——接驳条件一般</h3>
+          <p>各大医院、学校形成较强吸引，人口密度高但分担率较低；服务范围未全覆盖，骑行环境有待提升。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-h" style="margin-top:32px;">定性解读——商业类站点（以小白楼、天津站为例）</div>
+    <div class="g2" style="align-items:start;">
+      <figure>
+        <img src="assets/bike-sharing/crop_com_case.png" alt="商业类站点案例" />
+        <figcaption>图12 商业类站点：密度核心偏向商务办公楼，接驳形态呈偏心扩展</figcaption>
+      </figure>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="callout">
+          商业类站点密度核心多位于周边<strong>商务办公楼</strong>，接驳形态向强吸引区域偏移，部分密度高值区距地铁出口较远，提示需改善中间骑行路径。
+        </div>
+        <div class="card card-pad">
+          <h3>小白楼站</h3>
+          <p>接驳量大、分担率小；形态沿南京路向五大道延伸；周边有海河中学、人民公园等吸引点。</p>
+        </div>
+        <div class="card card-pad">
+          <h3>天津站</h3>
+          <p>接驳量大、分担率较小；接驳形态向北侧居民区延伸；津湾广场作为重要吸引点。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 07 优化导则 ══ -->
+  <div id="guide">
+    <div class="sec-head">
+      <p class="sec-eyebrow">07 · Optimization Guidelines</p>
+      <h2>优化设计导则</h2>
+      <p>结合出行特征分析与影响因素建模结果，从空间优化、单车调度、政府政策三个层面，针对三类站点提出差异化优化策略。</p>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="g4" style="margin-bottom:24px;">
+      <div class="card card-pad" style="border-top:4px solid var(--teal-l);">
+        <h3 style="font-size:.88rem;">🛡️ 安全为先</h3>
+        <p style="font-size:.8rem;">统筹规划连续通行空间，塑造人车分流、无障碍出行环境</p>
+      </div>
+      <div class="card card-pad" style="border-top:4px solid var(--orange);">
+        <h3 style="font-size:.88rem;">⚡ 高效便捷</h3>
+        <p style="font-size:.8rem;">以轨道站点为核心，集约利用立体空间，实现交通与城市生活有机融合</p>
+      </div>
+      <div class="card card-pad" style="border-top:4px solid var(--green);">
+        <h3 style="font-size:.88rem;">🌿 绿色生态</h3>
+        <p style="font-size:.8rem;">倡导共享单车绿色出行，落实生态修复城市修补，推动绿色发展方式</p>
+      </div>
+      <div class="card card-pad" style="border-top:4px solid #7b68ee;">
+        <h3 style="font-size:.88rem;">🤝 共享共治</h3>
+        <p style="font-size:.8rem;">创新空间治理事权，打破条块分割，提高规划实施协同性</p>
+      </div>
+    </div>
+
+    <div class="sub-h">居住类站点优化导则</div>
+    <figure>
+      <img src="assets/bike-sharing/crop_res_guide.png" alt="居住类站点导则" />
+      <figcaption>图13 居住类站点三步优化策略——识别接驳条件 → 合理投放调度 → 提高骑行舒适度</figcaption>
+    </figure>
+
+    <div class="sub-h" style="margin-top:28px;">商业类站点优化导则</div>
+    <figure>
+      <img src="assets/bike-sharing/crop_com_guide.png" alt="商业类站点导则" />
+      <figcaption>图14 商业类站点：改善周边交通衔接空间 · 非机动车道优化 · 彩色铺装与引导标志规范</figcaption>
+    </figure>
+  </div>
+
+  <!-- ══ 08 结论 ══ -->
+  <div id="concl">
+    <div class="sec-head">
+      <p class="sec-eyebrow">08 · Conclusions</p>
+      <h2>研究结论</h2>
+      <p>研究通过精细化分析轨道交通接驳共享单车数据，探索不同类型站点接驳时空特征与影响因素，提出针对性优化策略。</p>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="concl">
+      <div class="concl-item"><div class="concl-n">1</div><span>工作日接驳量更高；接驳频率集中 250–1000 次/日；骑行时长 5–10 分钟，距离 2 km 以内</span></div>
+      <div class="concl-item"><div class="concl-n">2</div><span>接驳服务范围形态分四类：放射扩展型 · 偏心扩展型 · 带状扩展型 · 多核心型</span></div>
+      <div class="concl-item"><div class="concl-n">3</div><span>居住类站点（45 个）接驳需求最高，周末接驳量大于工作日，体现显著的休闲出行特征</span></div>
+      <div class="concl-item"><div class="concl-n">4</div><span>综合接驳能力 = 28.89% × 接驳范围 ＋ 40.96% × 接驳量 ＋ 30.15% × 交通分担率</span></div>
+      <div class="concl-item"><div class="concl-n">5</div><span>居住人口密度、交通用地比例对综合接驳能力有显著<strong>正向</strong>影响；土地利用混合熵为显著<strong>负向</strong>影响</span></div>
+      <div class="concl-item"><div class="concl-n">6</div><span>分类提出居住 · 商业 · 混合三类站点优化导则，涵盖空间设计、单车调度与政策建议三个层面</span></div>
+    </div>
+
+    <div class="callout" style="margin-top:24px;">
+      <strong>未来展望：</strong>① 深化不同类型站点规律挖掘，补充周内 / 日内双维度描述；② 细化优化导则，从导则落实到具体空间设计，通过建成环境微改造提升接驳体验。
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<footer>
+  <strong>共享单车接驳轨道交通的时空特征与影响因素研究——以天津市为例</strong><br>
+  <span style="margin-top:6px; display:block;">苏琪 · 郭函祎 · 郭雅洁 · 崔馨元 &nbsp;|&nbsp; 指导教师：任利剑 &nbsp;|&nbsp; 天津大学建筑学院 · 设计课题研究</span>
+</footer>
+
+</body>
+</html>

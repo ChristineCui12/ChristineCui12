@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>城市情绪时空分析 | 微博打卡 × 百度指数</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+    img { display: block; max-width: 100%; }
+
+    /* ── Design tokens ── */
+    :root {
+      --navy:    #0f172a;
+      --navy2:   #1e293b;
+      --navy3:   #334155;
+      --blue:    #2563eb;
+      --blue-lt: #60a5fa;
+      --cyan:    #06b6d4;
+      --joy:     #16a34a;   /* 乐 green  */
+      --anger:   #dc2626;   /* 怒 red    */
+      --sadness: #3b82f6;   /* 哀 blue   */
+      --disgust: #d97706;   /* 恶 amber  */
+      --fear:    #9333ea;   /* 惧 purple */
+      --text:    #e2e8f0;
+      --muted:   #94a3b8;
+      --rule:    rgba(96,165,250,.25);
+    }
+
+    /* ── Navigation ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,23,42,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--rule);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 56px;
+    }
+    .nav-brand {
+      font-size: .85rem; color: var(--blue-lt); font-weight: 600;
+      text-decoration: none; letter-spacing: .04em;
+    }
+    nav ul { list-style: none; display: flex; gap: 1.8rem; }
+    nav a { color: var(--muted); text-decoration: none; font-size: .82rem;
+             transition: color .2s; }
+    nav a:hover { color: var(--text); }
+    .back-link {
+      font-size: .8rem; color: var(--muted); text-decoration: none;
+      transition: color .2s;
+    }
+    .back-link:hover { color: var(--text); }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative; height: 90vh; min-height: 560px;
+      overflow: hidden; display: flex; align-items: flex-end;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: url('assets/weibo-emotion/hero_title.png') center/cover no-repeat;
+      transform: scale(1.04);
+      filter: brightness(.55) saturate(.8);
+    }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg,
+        rgba(15,23,42,0) 20%,
+        rgba(15,23,42,.5) 60%,
+        rgba(15,23,42,.95) 100%);
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      padding: 4rem 3rem 4.5rem;
+      max-width: 900px;
+    }
+    .hero-eyebrow {
+      font-size: .78rem; font-weight: 600; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--cyan);
+      margin-bottom: .9rem;
+    }
+    h1 {
+      font-size: clamp(1.9rem, 4.5vw, 3.4rem);
+      font-weight: 700; line-height: 1.2;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+    .hero-sub {
+      font-size: 1rem; color: #cbd5e1; max-width: 640px;
+      margin-bottom: 2rem; line-height: 1.7;
+    }
+    .hero-tags { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .tag {
+      padding: .3rem .8rem; border-radius: 99px;
+      font-size: .75rem; font-weight: 600; letter-spacing: .05em;
+      border: 1px solid; cursor: default;
+    }
+    .tag-blue   { color: var(--blue-lt);  border-color: rgba(96,165,250,.4);  background: rgba(96,165,250,.08); }
+    .tag-cyan   { color: var(--cyan);     border-color: rgba(6,182,212,.4);   background: rgba(6,182,212,.08); }
+    .tag-purple { color: #c084fc;         border-color: rgba(192,132,252,.4); background: rgba(192,132,252,.08); }
+    .tag-green  { color: #86efac;         border-color: rgba(134,239,172,.4); background: rgba(134,239,172,.08); }
+
+    /* ── Sections ── */
+    section { padding: 5rem 3rem; max-width: 1200px; margin: 0 auto; }
+    .full-bleed { max-width: 100%; padding: 5rem 3rem; }
+    .full-bleed > .inner { max-width: 1200px; margin: 0 auto; }
+
+    /* Section heading */
+    .sec-label {
+      font-size: .72rem; font-weight: 700; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--cyan);
+      margin-bottom: .6rem;
+    }
+    h2 {
+      font-size: 1.9rem; font-weight: 700; color: #f1f5f9;
+      padding-bottom: .8rem; margin-bottom: 2.5rem;
+      border-bottom: 2px solid var(--rule);
+    }
+    h3 { font-size: 1.2rem; font-weight: 600; color: #f1f5f9; margin-bottom: .6rem; }
+
+    /* ── Overview grid ── */
+    .overview-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
+      align-items: start;
+    }
+    @media(max-width:768px){ .overview-grid { grid-template-columns: 1fr; } }
+
+    .overview-text p {
+      color: var(--muted); font-size: .95rem; line-height: 1.8;
+      margin-bottom: 1rem;
+    }
+    .overview-text strong { color: var(--text); }
+
+    /* Stat strip */
+    .stat-strip {
+      display: flex; flex-wrap: wrap; gap: 1.2rem;
+      margin-top: 1.8rem;
+    }
+    .stat {
+      flex: 1; min-width: 100px;
+      background: var(--navy2); border: 1px solid var(--rule);
+      border-radius: 10px; padding: 1rem 1.2rem;
+      text-align: center;
+    }
+    .stat-num { font-size: 1.8rem; font-weight: 700; color: var(--blue-lt); }
+    .stat-lbl { font-size: .73rem; color: var(--muted); margin-top: .2rem; }
+
+    /* Team card */
+    .team-card {
+      background: var(--navy2); border: 1px solid var(--rule);
+      border-radius: 12px; padding: 1.8rem;
+    }
+    .team-card h3 { color: var(--cyan); margin-bottom: 1rem; }
+    .team-row { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: .8rem; }
+    .member-chip {
+      background: var(--navy3); border-radius: 6px;
+      padding: .35rem .8rem; font-size: .8rem; color: var(--text);
+    }
+    .advisor-row { margin-top: .5rem; font-size: .82rem; color: var(--muted); }
+    .advisor-row strong { color: var(--text); }
+
+    /* ── Emotion legend ── */
+    .emotion-legend {
+      display: flex; flex-wrap: wrap; gap: .8rem; margin-bottom: 2.5rem;
+    }
+    .emo {
+      display: flex; align-items: center; gap: .5rem;
+      background: var(--navy2); border: 1px solid var(--rule);
+      border-radius: 8px; padding: .5rem 1rem;
+    }
+    .emo-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    .emo span { font-size: .85rem; color: var(--text); }
+    .emo small { font-size: .72rem; color: var(--muted); }
+
+    /* ── Two-col layout ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+    .three-col { display: grid; grid-template-columns: repeat(3,1fr); gap: 2rem; }
+    @media(max-width:900px){ .two-col,.three-col { grid-template-columns: 1fr; } }
+
+    /* ── Figure / figcaption ── */
+    figure {
+      background: var(--navy2); border: 1px solid var(--rule);
+      border-radius: 12px; overflow: hidden;
+    }
+    figure img { width: 100%; }
+    figcaption {
+      padding: .8rem 1rem; font-size: .78rem; color: var(--muted);
+      border-top: 1px solid var(--rule); line-height: 1.5;
+    }
+    figcaption strong { color: var(--text); }
+
+    /* ── Callout box ── */
+    .callout {
+      border-left: 3px solid var(--blue-lt);
+      background: rgba(96,165,250,.07);
+      border-radius: 0 8px 8px 0;
+      padding: 1rem 1.4rem; margin: 1.5rem 0;
+      font-size: .9rem; color: #cbd5e1;
+      line-height: 1.7;
+    }
+    .callout.green  { border-color: #4ade80; background: rgba(74,222,128,.07); }
+    .callout.red    { border-color: #f87171; background: rgba(248,113,113,.07); }
+    .callout.purple { border-color: #c084fc; background: rgba(192,132,252,.07); }
+    .callout strong { color: var(--text); }
+
+    /* ── City divider banner ── */
+    .city-banner {
+      position: relative; height: 320px; overflow: hidden;
+      border-radius: 16px; margin-bottom: 3rem;
+      display: flex; align-items: flex-end;
+    }
+    .city-banner img.bg {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; filter: brightness(.6);
+    }
+    .city-banner-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, rgba(15,23,42,.75) 40%, transparent 100%);
+    }
+    .city-banner-text {
+      position: relative; z-index: 2; padding: 2rem 2.5rem;
+    }
+    .city-banner-text h2 {
+      font-size: 3rem; border: none; padding: 0; margin: 0;
+      color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.6);
+    }
+    .city-banner-text p {
+      color: #cbd5e1; font-size: .95rem; margin-top: .3rem;
+    }
+
+    /* ── Emotion map row ── */
+    .map-grid {
+      display: grid;
+      grid-template-columns: repeat(5,1fr);
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    @media(max-width:900px){ .map-grid { grid-template-columns: repeat(3,1fr); } }
+    @media(max-width:600px){ .map-grid { grid-template-columns: repeat(2,1fr); } }
+
+    .map-card {
+      background: var(--navy2); border: 1px solid var(--rule);
+      border-radius: 10px; overflow: hidden;
+    }
+    .map-card img { width: 100%; }
+    .map-card-label {
+      text-align: center; padding: .5rem;
+      font-size: .8rem; font-weight: 600;
+    }
+
+    /* ── Word cloud showcase ── */
+    .wc-showcase {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    @media(max-width:768px){ .wc-showcase { grid-template-columns: 1fr; } }
+
+    /* ── Data pipeline ── */
+    .pipeline-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    @media(max-width:768px){ .pipeline-grid { grid-template-columns: 1fr; } }
+
+    .pipeline-card {
+      background: var(--navy2); border: 1px solid var(--rule);
+      border-radius: 12px; padding: 1.8rem;
+    }
+    .pipeline-card h3 { margin-bottom: .5rem; }
+    .pipeline-tag {
+      display: inline-block; font-size: .72rem; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      padding: .2rem .7rem; border-radius: 4px; margin-bottom: 1rem;
+    }
+    .tag-spatial { background: rgba(6,182,212,.15); color: var(--cyan); }
+    .tag-temporal { background: rgba(147,51,234,.15); color: #c084fc; }
+
+    .pipeline-steps { list-style: none; }
+    .pipeline-steps li {
+      display: flex; gap: .8rem; align-items: flex-start;
+      padding: .6rem 0; border-bottom: 1px solid var(--rule);
+      font-size: .88rem; color: var(--muted);
+    }
+    .pipeline-steps li:last-child { border: none; }
+    .step-num {
+      width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+      background: var(--blue); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .72rem; font-weight: 700;
+    }
+    .pipeline-steps strong { color: var(--text); }
+
+    /* ── Summary card ── */
+    .summary-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+      margin-top: 2rem;
+    }
+    @media(max-width:768px){ .summary-grid { grid-template-columns: 1fr; } }
+
+    .summary-card {
+      background: var(--navy2); border: 1px solid var(--rule);
+      border-radius: 12px; padding: 1.8rem;
+    }
+    .summary-card h3 { color: var(--cyan); margin-bottom: 1rem; }
+    .summary-card ul { list-style: none; }
+    .summary-card li {
+      padding: .5rem 0; border-bottom: 1px solid var(--rule);
+      font-size: .88rem; color: var(--muted); display: flex; gap: .6rem;
+    }
+    .summary-card li:last-child { border: none; }
+    .summary-card li::before {
+      content: '▸'; color: var(--blue-lt); flex-shrink: 0;
+    }
+
+    /* ── Keyword analysis ── */
+    .keyword-cards {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    @media(max-width:900px){ .keyword-cards { grid-template-columns: 1fr; } }
+
+    .kw-card {
+      background: var(--navy2); border: 1px solid var(--rule);
+      border-radius: 12px; padding: 1.5rem;
+    }
+    .kw-word {
+      font-size: 1.6rem; font-weight: 700; margin-bottom: .4rem;
+    }
+    .kw-emotions {
+      display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .8rem;
+    }
+    .emo-badge {
+      font-size: .7rem; padding: .2rem .6rem; border-radius: 4px; font-weight: 600;
+    }
+    .emo-badge.joy     { background: rgba(22,163,74,.2);  color: #4ade80; }
+    .emo-badge.anger   { background: rgba(220,38,38,.2);  color: #f87171; }
+    .emo-badge.sadness { background: rgba(59,130,246,.2); color: #93c5fd; }
+    .emo-badge.disgust { background: rgba(217,119,6,.2);  color: #fbbf24; }
+    .emo-badge.fear    { background: rgba(147,51,234,.2); color: #d8b4fe; }
+    .kw-card p { font-size: .83rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── Section divider ── */
+    .sec-divider {
+      border: none; border-top: 1px solid var(--rule);
+      margin: 0 3rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--navy2); border-top: 1px solid var(--rule);
+      text-align: center; padding: 3rem 2rem;
+      color: var(--muted); font-size: .82rem;
+    }
+    footer strong { color: var(--text); }
+    .footer-nav { display: flex; gap: 2rem; justify-content: center; margin-top: 1rem; }
+    .footer-nav a { color: var(--muted); text-decoration: none; font-size: .8rem; }
+    .footer-nav a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <a class="nav-brand" href="index.html">← 返回项目总览</a>
+  <ul>
+    <li><a href="#overview">概述</a></li>
+    <li><a href="#methodology">研究路线</a></li>
+    <li><a href="#beijing">北京</a></li>
+    <li><a href="#tianjin">天津</a></li>
+    <li><a href="#keywords">关键词分析</a></li>
+    <li><a href="#findings">研究结论</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ── -->
+<header class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">城市规划 · 大数据分析 · 情绪地理学</p>
+    <h1>城市情绪时空分析</h1>
+    <p class="hero-sub">基于微博打卡留言数据与百度指数时间序列，从<strong>空间</strong>与<strong>时间</strong>双视角解析北京、天津、上海、重庆四座城市的情绪分布规律。</p>
+    <div class="hero-tags">
+      <span class="tag tag-cyan">微博打卡数据</span>
+      <span class="tag tag-purple">百度指数时序</span>
+      <span class="tag tag-blue">ArcGIS空间可视化</span>
+      <span class="tag tag-green">NLP情感分类</span>
+      <span class="tag tag-cyan">STL分解 · 相关性分析</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── Overview ── -->
+<section id="overview">
+  <p class="sec-label">研究概述</p>
+  <h2>项目背景与目标</h2>
+
+  <div class="overview-grid">
+    <div class="overview-text">
+      <p>随着社交媒体的普及，城市居民在微博等平台上留下海量带有地理标签的情绪表达。本研究以<strong>微博打卡留言</strong>为空间数据源，以<strong>百度指数关键词搜索量</strong>为时间数据源，对四个直辖市进行情绪时空分析。</p>
+      <p>研究将情绪分为<strong>乐、怒、哀、恶、惧</strong>五类，借助ArcGIS生成各区县情绪分布图，结合词频统计与词云可视化揭示各城市的情绪特征，并通过时间序列分析探索情绪波动的周期性规律。</p>
+      <p>研究发现：<strong>北部郊区整体情绪较积极，核心城区消极情绪偏高</strong>；工作压力、疫情影响与城市基础设施问题是情绪波动的主要驱动力。</p>
+      <div class="callout green">
+        <strong>核心问题：</strong>城市不同地区的情绪是否存在空间分布规律？情绪关键词的时间序列呈现怎样的周期性特征？
+      </div>
+    </div>
+
+    <div>
+      <div class="stat-strip" style="margin-bottom:1.5rem;">
+        <div class="stat">
+          <div class="stat-num">4</div>
+          <div class="stat-lbl">分析城市</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">5</div>
+          <div class="stat-lbl">情绪类别</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">128</div>
+          <div class="stat-lbl">百度指数关键词</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">2</div>
+          <div class="stat-lbl">数据维度</div>
+        </div>
+      </div>
+      <div class="team-card">
+        <h3>研究团队</h3>
+        <div class="team-row">
+          <span class="member-chip">叶薪悦</span>
+          <span class="member-chip">陈萌</span>
+          <span class="member-chip">柳心怡</span>
+          <span class="member-chip">崔馨元</span>
+          <span class="member-chip">李澍堉</span>
+        </div>
+        <div class="advisor-row">
+          <strong>指导老师：</strong>张天洁 &nbsp;·&nbsp; 崔博庶 &nbsp;·&nbsp; 张孝贤
+        </div>
+        <div class="advisor-row" style="margin-top:.4rem;">
+          <strong>机构：</strong>天津大学
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Emotion Legend ── -->
+<section style="padding-top:0;">
+  <p class="sec-label">情绪分类体系</p>
+  <h2>五维情绪框架</h2>
+  <div class="emotion-legend">
+    <div class="emo">
+      <div class="emo-dot" style="background:var(--joy)"></div>
+      <span>乐</span>&nbsp;<small>(Joy)</small>
+    </div>
+    <div class="emo">
+      <div class="emo-dot" style="background:var(--anger)"></div>
+      <span>怒</span>&nbsp;<small>(Anger)</small>
+    </div>
+    <div class="emo">
+      <div class="emo-dot" style="background:var(--sadness)"></div>
+      <span>哀</span>&nbsp;<small>(Sadness)</small>
+    </div>
+    <div class="emo">
+      <div class="emo-dot" style="background:var(--disgust)"></div>
+      <span>恶</span>&nbsp;<small>(Disgust)</small>
+    </div>
+    <div class="emo">
+      <div class="emo-dot" style="background:var(--fear)"></div>
+      <span>惧</span>&nbsp;<small>(Fear)</small>
+    </div>
+  </div>
+  <p style="color:var(--muted);font-size:.88rem;max-width:680px;">
+    通过预训练的 ChatGPT 模型，对微博文本进行五情绪分类，提取各城市各区县的情绪占比，并导入 ArcGIS 进行空间等级可视化。百度指数端则通过相关性检验确定各关键词的主导情绪类型。
+  </p>
+</section>
+
+<hr class="sec-divider">
+
+<!-- ── Methodology ── -->
+<section id="methodology">
+  <p class="sec-label">研究设计</p>
+  <h2>技术路线</h2>
+
+  <figure style="margin-bottom:2.5rem;">
+    <img src="assets/weibo-emotion/roadmap.png" alt="技术路线图">
+    <figcaption>
+      <strong>双轨并行架构：</strong>左侧微博打卡数据流（空间角度）→ 数据爬取 · 情绪标注 · ArcGIS可视化 · 词云；右侧百度指数时间序列流（时间角度）→ 关键词库构建 · 统计分析 · STL分解 · 相关性检验
+    </figcaption>
+  </figure>
+
+  <div class="pipeline-grid">
+    <div class="pipeline-card">
+      <div class="pipeline-tag tag-spatial">空间维度 · 微博打卡</div>
+      <h3>微博数据处理流程</h3>
+      <ul class="pipeline-steps">
+        <li><div class="step-num">1</div><div><strong>数据爬取：</strong>抓取天津各区打卡坐标及留言文本</div></li>
+        <li><div class="step-num">2</div><div><strong>清洗去重：</strong>去除重复条目，对应打卡坐标</div></li>
+        <li><div class="step-num">3</div><div><strong>情绪判别：</strong>ChatGPT模型输出 joy / sadness / anger / love / fear 标签</div></li>
+        <li><div class="step-num">4</div><div><strong>空间聚合：</strong>按区县统计情绪比例，导入ArcGIS</div></li>
+        <li><div class="step-num">5</div><div><strong>文本聚类：</strong>文本分词 → 提取主题 → 词云可视化</div></li>
+      </ul>
+    </div>
+
+    <div class="pipeline-card">
+      <div class="pipeline-tag tag-temporal">时间维度 · 百度指数</div>
+      <h3>时序分析流程</h3>
+      <ul class="pipeline-steps">
+        <li><div class="step-num">1</div><div><strong>关键词库：</strong>构建128项情绪关键词，覆盖四城市</div></li>
+        <li><div class="step-num">2</div><div><strong>基础统计：</strong>最大值、均值、偏度、峰度、标准差等七项指标</div></li>
+        <li><div class="step-num">3</div><div><strong>平稳性检验：</strong>判断加法/乘法模型选择</div></li>
+        <li><div class="step-num">4</div><div><strong>STL分解：</strong>季节性 · 趋势 · 残差成分拆解</div></li>
+        <li><div class="step-num">5</div><div><strong>相关性检验：</strong>自相关图、正态分布检验，关联人民网投诉数据</div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>代表性关键词选取：</strong>由于情绪词数量多、重复性高，最终选取三个代表性词汇进行深度分析——
+    <strong>度假</strong>（单一情绪·乐）、<strong>安眠药</strong>（两种情绪·惧+哀 0.7/0.6）、<strong>创业</strong>（三种情绪·乐+惧+恶 各0.6/0.6/0.4）
+  </div>
+</section>
+
+<!-- ── City Selection ── -->
+<section style="padding-top:0;">
+  <p class="sec-label">研究范围</p>
+  <h2>四城市选取</h2>
+
+  <figure style="margin-bottom:2rem;">
+    <img src="assets/weibo-emotion/city_selection.png" alt="四城市选取说明">
+    <figcaption>选取25城市中四个直辖市作为代表，兼顾<strong>共性</strong>（相同行政地位、区域经济中心）与<strong>个性</strong>（社会结构差异、文化底蕴差异、地理位置分异、人群组成不同）</figcaption>
+  </figure>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;">
+    <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:10px;padding:1.2rem;text-align:center;">
+      <div style="font-size:1.4rem;font-weight:700;color:var(--blue-lt);margin-bottom:.3rem;">北京</div>
+      <div style="font-size:.75rem;color:var(--muted);">"帝都"<br>全国政治中心 · 文化中心<br>国际交往中心 · 科技创新中心</div>
+    </div>
+    <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:10px;padding:1.2rem;text-align:center;">
+      <div style="font-size:1.4rem;font-weight:700;color:var(--cyan);margin-bottom:.3rem;">天津</div>
+      <div style="font-size:.75rem;color:var(--muted);">"哏都"<br>先进制造中心 · 国际港口城市<br>北方经济中心 · 生态城市</div>
+    </div>
+    <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:10px;padding:1.2rem;text-align:center;">
+      <div style="font-size:1.4rem;font-weight:700;color:#a78bfa;margin-bottom:.3rem;">上海</div>
+      <div style="font-size:.75rem;color:var(--muted);">"魔都"<br>国际经济中心 · 金融中心<br>国际贸易中心 · 航运中心</div>
+    </div>
+    <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:10px;padding:1.2rem;text-align:center;">
+      <div style="font-size:1.4rem;font-weight:700;color:#fb923c;margin-bottom:.3rem;">重庆</div>
+      <div style="font-size:.75rem;color:var(--muted);">"山城"<br>西部金融枢纽 · 西部国际综合<br>交通枢纽 · 国际门户枢纽</div>
+    </div>
+  </div>
+</section>
+
+<hr class="sec-divider">
+
+<!-- ══════════════════════════════════════
+     BEIJING
+════════════════════════════════════════ -->
+<section id="beijing" style="padding-bottom:1rem;">
+  <div class="city-banner">
+    <img class="bg" src="assets/weibo-emotion/beijing_intro.png" alt="北京">
+    <div class="city-banner-overlay"></div>
+    <div class="city-banner-text">
+      <h2>北京</h2>
+      <p>城市情绪时空分析</p>
+    </div>
+  </div>
+
+  <p class="sec-label">空间分析 · 北京</p>
+  <h2>微博情绪空间分布</h2>
+
+  <div class="map-grid">
+    <div class="map-card">
+      <img src="assets/weibo-emotion/beijing_anger.png" alt="北京怒情绪分布">
+      <div class="map-card-label" style="color:var(--anger);">怒 Anger</div>
+    </div>
+    <div class="map-card">
+      <img src="assets/weibo-emotion/beijing_fear.png" alt="北京惧情绪分布">
+      <div class="map-card-label" style="color:var(--fear);">惧 Fear</div>
+    </div>
+    <div class="map-card">
+      <img src="assets/weibo-emotion/beijing_joy.png" alt="北京乐情绪分布">
+      <div class="map-card-label" style="color:var(--joy);">乐 Joy</div>
+    </div>
+    <div class="map-card">
+      <img src="assets/weibo-emotion/beijing_love.png" alt="北京爱情绪分布">
+      <div class="map-card-label" style="color:#ec4899;">爱 Love</div>
+    </div>
+    <div class="map-card">
+      <img src="assets/weibo-emotion/beijing_sadness.png" alt="北京哀情绪分布">
+      <div class="map-card-label" style="color:var(--sadness);">哀 Sadness</div>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-bottom:2.5rem;">
+    <div>
+      <div class="callout red">
+        <strong>怒·空间规律：</strong>anger占总情绪比例较高的地区主要分布于北京市城区中心，以朝阳区的比例最高。市中心的工作学习及旅游等人群交流活动的发生机会更多且聚集。
+      </div>
+      <div class="callout purple">
+        <strong>惧·空间规律：</strong>fear占总情绪比例较高的地区主要是顺义区与东城区，丰台区。而比例较低的地区集中在北京西北部。
+      </div>
+    </div>
+    <div>
+      <div class="callout green">
+        <strong>乐·空间规律：</strong>joy主要集中分布于北部的延庆区、怀柔区、密云区、平谷区的聚集区，而偏南部的丰台区及大兴等区joy占总情绪比例较低。
+      </div>
+      <div class="callout" style="border-color:#f9a8d4;background:rgba(249,168,212,.07);">
+        <strong>整体特征：</strong>延庆区与怀柔等北部地区的整体情绪较为开心，消极情绪较少；而作为市区核心的朝阳、东城、西城等区的消极情绪明显高于北部地区。
+      </div>
+    </div>
+  </div>
+
+  <figure style="margin-bottom:2.5rem;">
+    <img src="assets/weibo-emotion/beijing_pies.png" alt="北京各区县情绪饼图">
+    <figcaption><strong>北京各区县情绪比例饼图：</strong>各区县情绪构成一览，可直观对比核心城区与郊区的情绪差异——北部延庆、怀柔等郊区积极情绪占比明显高于南部城区。</figcaption>
+  </figure>
+
+  <p class="sec-label">文本分析 · 北京</p>
+  <h2>微博关键词与词云</h2>
+
+  <div class="two-col" style="margin-bottom:2rem;">
+    <figure>
+      <img src="assets/weibo-emotion/beijing_wordcloud.png" alt="北京微博文本聚类关键词词云">
+      <figcaption><strong>北京综合词云：</strong>生活品质、北京、环球影城等词汇高频出现，整体情绪分类较为丰富，且较能代表北京的城市特色。</figcaption>
+    </figure>
+    <div>
+      <h3 style="margin-bottom:1rem;">六大主题分类</h3>
+      <div style="display:flex;flex-direction:column;gap:.8rem;">
+        <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.2rem;">
+          <div style="font-size:.8rem;font-weight:700;color:var(--cyan);">旅游景点·历史景点</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">胡同、展览、天安门、圆明园、故宫、雍和宫</div>
+        </div>
+        <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.2rem;">
+          <div style="font-size:.8rem;font-weight:700;color:var(--cyan);">旅游景点·环球影城</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">霍格沃兹、童话、花车、魔法、麻瓜</div>
+        </div>
+        <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.2rem;">
+          <div style="font-size:.8rem;font-weight:700;color:var(--cyan);">美食·特色</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">豆汁、烤鸭、牛肉烧饼、炸酱面</div>
+        </div>
+        <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.2rem;">
+          <div style="font-size:.8rem;font-weight:700;color:var(--cyan);">日常生活·分享</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">落日、健身、幸福、咖啡机、运动</div>
+        </div>
+        <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.2rem;">
+          <div style="font-size:.8rem;font-weight:700;color:var(--cyan);">交通·地铁站</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">旅客、候车、拥堵、安检、延误</div>
+        </div>
+        <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.2rem;">
+          <div style="font-size:.8rem;font-weight:700;color:var(--cyan);">北京暴雨·预警</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">降雨、台风、列车影响、停运、等待</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wc-showcase">
+    <figure>
+      <img src="assets/weibo-emotion/beijing_wc_tourist.png" alt="北京旅游景点词云">
+      <figcaption><strong>旅游景点主题：</strong>左—环球影城（童话魔法）；右—历史景点（胡同、天安门、圆明园）</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/weibo-emotion/beijing_wc_food.png" alt="北京美食与日常词云">
+      <figcaption><strong>美食与日常生活主题：</strong>左—特色美食（烤鸭、炸酱面、豆汁）；右—日常分享（落日、健身、咖啡机）</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/weibo-emotion/beijing_wc_transport.png" alt="北京交通与天气词云">
+      <figcaption><strong>交通与暴雨事件：</strong>左—地铁交通（机场、南站、延误）；右—北京暴雨（强降水、刹车、等待）</figcaption>
+    </figure>
+  </div>
+
+  <p class="sec-label">时间分析 · 北京</p>
+  <h2>百度情绪时间序列</h2>
+
+  <div class="two-col" style="margin-bottom:2rem;">
+    <div>
+      <div class="callout">
+        <strong>"乐"是北京情绪表达的长期主题</strong>，情绪变化主要来自工作生活，消极情绪占比相对较小。
+      </div>
+      <div class="callout purple">
+        <strong>安眠药</strong>（两种情绪·惧+哀）作为代表词，情绪表达较为复杂丰富，其在百度指数中的需求量更容易被使用，说明该词对于情绪的代表性更强。
+      </div>
+      <div class="callout red" style="margin-bottom:0;">
+        <strong>人民网投诉高峰</strong>出现在2022年8—9月，主要问题为路口交通、噪音扰民、培训退款；工资拖欠问题在2023年明显增加；房屋产权纠纷在2022年5月—2023年3月为主要峰值。
+      </div>
+    </div>
+    <figure>
+      <img src="assets/weibo-emotion/beijing_timeseries.png" alt="北京时间序列分析图">
+      <figcaption><strong>代表性关键词时序：</strong>单一情绪·度假 / 两种情绪·安眠药 / 三种情绪·创业，展示不同情绪复杂度的搜索量时间变化</figcaption>
+    </figure>
+  </div>
+
+  <figure style="margin-bottom:2rem;">
+    <img src="assets/weibo-emotion/beijing_complaints.png" alt="北京人民网投诉时间序列">
+    <figcaption><strong>人民网城市病时间序列（北京）：</strong>各类城市投诉问题的月度趋势——路口交通、噪音扰民、培训退款在2022年8-9月达到峰值，工资拖欠在2023年显著增加。</figcaption>
+  </figure>
+</section>
+
+<hr class="sec-divider">
+
+<!-- ══════════════════════════════════════
+     TIANJIN
+════════════════════════════════════════ -->
+<section id="tianjin" style="padding-bottom:1rem;">
+  <div class="city-banner">
+    <img class="bg" src="assets/weibo-emotion/tianjin_intro.png" alt="天津">
+    <div class="city-banner-overlay"></div>
+    <div class="city-banner-text">
+      <h2>天津</h2>
+      <p>城市情绪时空分析</p>
+    </div>
+  </div>
+
+  <p class="sec-label">空间分析 · 天津</p>
+  <h2>微博情绪空间分布</h2>
+
+  <div class="map-grid">
+    <div class="map-card">
+      <img src="assets/weibo-emotion/tianjin_anger.png" alt="天津怒情绪分布">
+      <div class="map-card-label" style="color:var(--anger);">怒 Anger</div>
+    </div>
+    <div class="map-card">
+      <img src="assets/weibo-emotion/tianjin_fear.png" alt="天津惧情绪分布">
+      <div class="map-card-label" style="color:var(--fear);">惧 Fear</div>
+    </div>
+    <div class="map-card">
+      <img src="assets/weibo-emotion/tianjin_joy.png" alt="天津乐情绪分布">
+      <div class="map-card-label" style="color:var(--joy);">乐 Joy</div>
+    </div>
+    <div class="map-card">
+      <img src="assets/weibo-emotion/tianjin_love.png" alt="天津爱情绪分布">
+      <div class="map-card-label" style="color:#ec4899;">爱 Love</div>
+    </div>
+    <div class="map-card">
+      <img src="assets/weibo-emotion/tianjin_sadness.png" alt="天津哀情绪分布">
+      <div class="map-card-label" style="color:var(--sadness);">哀 Sadness</div>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-bottom:2.5rem;">
+    <div>
+      <div class="callout red">
+        <strong>怒·空间规律：</strong>anger占总情绪比例较高的地区主要分布于天津的边缘地区，而市北部的情绪相对较好。武清区、静海区、河东区占比最高。
+      </div>
+      <div class="callout purple">
+        <strong>惧·空间规律：</strong>整体上只有东丽区的fear情绪比例较高，而总比例较低的地区集中在天津北部。
+      </div>
+    </div>
+    <div>
+      <div class="callout green">
+        <strong>乐·空间规律：</strong>joy的高比例区主要集中中西部的武清、北辰及西青等区的聚集区域，而东南部的滨海新区及静海、东疆等区joy占总情绪比例较低。
+      </div>
+      <div class="callout" style="border-color:var(--sadness);background:rgba(59,130,246,.07);">
+        <strong>哀·空间规律：</strong>sadness的高比例地区集中分布于滨海新区、宁河区及宝坻区三区，整体而言天津的sadness与其他城市相比占比较大。
+      </div>
+    </div>
+  </div>
+
+  <figure style="margin-bottom:2.5rem;">
+    <img src="assets/weibo-emotion/tianjin_pies.png" alt="天津各区县情绪饼图">
+    <figcaption><strong>天津各区县情绪比例饼图：</strong>天津整体还是以joy等积极情绪为主，消极情绪较少。但是静海区、滨海新区及宝坻区三区中的joy情绪占比明显低于其他区域，sadness情绪比例也高于其他地区。</figcaption>
+  </figure>
+
+  <p class="sec-label">文本分析 · 天津</p>
+  <h2>微博关键词与词云</h2>
+
+  <div class="two-col" style="margin-bottom:2rem;">
+    <figure>
+      <img src="assets/weibo-emotion/tianjin_wordcloud.png" alt="天津微博词云">
+      <figcaption><strong>天津综合词云：</strong>海河、天津、吃、周末等词高频出现，整体情绪分类较为丰富，且较能代表天津悠闲的生活特色。最终筛选六个主题：旅游景点、天津高校、美食、日常生活、交通状况及演唱会。</figcaption>
+    </figure>
+    <div>
+      <h3 style="margin-bottom:1rem;">六大主题分类</h3>
+      <div style="display:flex;flex-direction:column;gap:.8rem;">
+        <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.2rem;">
+          <div style="font-size:.8rem;font-weight:700;color:#06b6d4;">旅游景点·历史景点</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">天津之眼、海洋博物馆、海河、望海楼</div>
+        </div>
+        <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.2rem;">
+          <div style="font-size:.8rem;font-weight:700;color:#06b6d4;">天津高校·学习</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">图书馆、天津大学、南开大学、青春</div>
+        </div>
+        <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.2rem;">
+          <div style="font-size:.8rem;font-weight:700;color:#06b6d4;">美食·特色</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">煎饼果子、嘎巴菜、面茶、熟梨糕、牛肉烧饼</div>
+        </div>
+        <div style="background:var(--navy2);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.2rem;">
+          <div style="font-size:.8rem;font-weight:700;color:#06b6d4;">交通·机场站</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">滨海机场、交警、延误、停车、航班延误</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wc-showcase">
+    <figure>
+      <img src="assets/weibo-emotion/tianjin_wc_university.png" alt="天津高校与交通词云">
+      <figcaption><strong>高校与交通主题：</strong>左—天津高校（考研、毕业、图书馆、南开大学）；右—交通（机场、高速运营、航班延误）</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/weibo-emotion/tianjin_wc_tourist.png" alt="天津旅游与美食词云">
+      <figcaption><strong>旅游与美食主题：</strong>左—历史景点（天津之眼、海洋博物馆、海河、望海楼）；右—特色美食（煎饼果子、嘎巴菜、牛肉烧饼、熟梨糕）</figcaption>
+    </figure>
+  </div>
+</section>
+
+<hr class="sec-divider">
+
+<!-- ── Keyword Analysis ── -->
+<section id="keywords">
+  <p class="sec-label">情绪词典</p>
+  <h2>代表性关键词深度解析</h2>
+  <p style="color:var(--muted);margin-bottom:2rem;font-size:.9rem;">
+    从128个关键词中，依据情绪复杂度选取三个代表性词汇进行完整时序分析，分别代表<strong>单一情绪</strong>、<strong>两种情绪</strong>、<strong>三种情绪</strong>三类。
+  </p>
+
+  <div class="keyword-cards">
+    <div class="kw-card">
+      <div class="kw-word" style="color:#4ade80;">度假</div>
+      <div class="kw-emotions">
+        <span class="emo-badge joy">乐 1.0</span>
+      </div>
+      <p>代表<strong>单一情绪</strong>关键词。度假在百度指数中呈现强烈的季节性规律，节假日前后搜索量显著飙升，STL趋势成分总体平稳。情绪表达直接明确，代表正向生活需求。</p>
+    </div>
+    <div class="kw-card">
+      <div class="kw-word" style="color:#d8b4fe;">安眠药</div>
+      <div class="kw-emotions">
+        <span class="emo-badge fear">惧 0.7</span>
+        <span class="emo-badge sadness">哀 0.6</span>
+      </div>
+      <p>代表<strong>两种情绪</strong>关键词。时序分析显示出较高的波动性，其情绪表达复杂丰富，在百度指数中的检索频率较高，说明该词对于情绪传递具有更强代表性，常在心理健康事件期后出现峰值。</p>
+    </div>
+    <div class="kw-card">
+      <div class="kw-word" style="color:#fbbf24;">创业</div>
+      <div class="kw-emotions">
+        <span class="emo-badge joy">乐 0.6</span>
+        <span class="emo-badge fear">惧 0.6</span>
+        <span class="emo-badge disgust">恶 0.4</span>
+      </div>
+      <p>代表<strong>三种情绪</strong>关键词。创业词汇折射出对未来的期许（乐）与风险担忧（惧），以及对现状的不满（恶）。时序上与经济形势高度相关，疫情期间搜索量明显变化。</p>
+    </div>
+  </div>
+</section>
+
+<hr class="sec-divider">
+
+<!-- ── Findings ── -->
+<section id="findings">
+  <p class="sec-label">研究结论</p>
+  <h2>主要发现与城市情绪画像</h2>
+
+  <div class="callout" style="margin-bottom:2.5rem;font-size:1rem;">
+    <strong>"城里的人想出去，城外的人想进来。"</strong> ——北京情绪综合画像的核心命题：核心城区消极情绪偏高，而北部郊区整体情绪较为积极开朗。
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <h3>空间规律（微博维度）</h3>
+      <ul>
+        <li>北部郊区（延庆、怀柔、密云等）整体情绪积极，消极情绪占比低</li>
+        <li>核心城区（朝阳、东城、西城）消极情绪明显高于郊区</li>
+        <li>城市边缘区如丰台区积极情绪比其他区整体较低</li>
+        <li>天津静海、滨海新区的sadness占比显著高于其他区</li>
+        <li>四城市均以积极情绪（乐+爱）为主导，消极情绪较少</li>
+      </ul>
+    </div>
+    <div class="summary-card">
+      <h3>时间规律（百度维度）</h3>
+      <ul>
+        <li>情绪关键词搜索量呈现明显季节性周期，节假日前后波动显著</li>
+        <li>"乐"是四城市情绪表达的长期主导主题</li>
+        <li>疫情期间（2020—2022）多类关键词出现异常峰值</li>
+        <li>工作类词汇（996、加班、工资）与经济形势高度相关</li>
+        <li>情绪复杂度越高的关键词，其时间序列波动性越强</li>
+      </ul>
+    </div>
+    <div class="summary-card">
+      <h3>城市主导关注点</h3>
+      <ul>
+        <li><strong>北京：</strong>环球影城、历史景点、北京暴雨事件</li>
+        <li><strong>天津：</strong>海河旅游、高校文化、特色美食</li>
+        <li><strong>上海：</strong>迪士尼、演唱会、国际活动</li>
+        <li><strong>重庆：</strong>山城景色、火锅美食、生活享乐</li>
+        <li>各城市均表现出旅游、美食、交通三大核心话题</li>
+      </ul>
+    </div>
+    <div class="summary-card">
+      <h3>城市病关联分析</h3>
+      <ul>
+        <li>人民网投诉数据与情绪关键词具有时序相关性</li>
+        <li>路口交通、噪音扰民在夏季（8—9月）投诉量最高</li>
+        <li>培训退款、工资拖欠与经济波动周期吻合</li>
+        <li>房屋产权纠纷在2022年5月至2023年3月为主要峰值</li>
+        <li>城市设施完善程度与情绪空间分布存在正相关</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <strong>城市情绪时空分析</strong><br>
+  基于微博打卡留言数据和百度指数时间序列<br>
+  <div style="margin-top:.4rem;color:#64748b;">叶薪悦 · 陈萌 · 柳心怡 · 崔馨元 · 李澍堉 &nbsp;|&nbsp; 天津大学</div>
+  <div class="footer-nav">
+    <a href="index.html">← 返回总览</a>
+    <a href="project-bike-sharing.html">共享单车研究</a>
+  </div>
+</footer>
+
+</body>
+</html>
